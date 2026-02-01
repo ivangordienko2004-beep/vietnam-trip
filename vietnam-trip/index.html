@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b2a2a" />
+  <title>План поездки во Вьетнам</title>
+
+  <style>
+    :root{
+      --bg0:#071b1b;
+      --bg1:#0b2a2a;
+      --mint:#7fffd4;
+      --gold:#ffd56a;
+      --pink:#ff7aa8;
+      --text:#f3fbfb;
+      --muted:rgba(243,251,251,.78);
+      --glass: rgba(255,255,255,.10);
+      --glass2: rgba(255,255,255,.14);
+      --shadow: 0 18px 60px rgba(0,0,0,.38);
+      --r: 24px;
+    }
+
+    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+    html,body{
+      height:100%;
+      margin:0;
+      background: radial-gradient(1200px 800px at 20% 10%, #0f3b3b 0%, var(--bg0) 50%, #050d0d 100%);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    body{ overflow:hidden; }
+
+    /* Top progress */
+    .topbar{
+      position:fixed; left:0; right:0; top:0;
+      padding: calc(env(safe-area-inset-top) + 10px) 14px 10px;
+      z-index:50;
+      display:flex; align-items:center; gap:10px;
+      background: linear-gradient(to bottom, rgba(0,0,0,.35), rgba(0,0,0,0));
+      pointer-events:none;
+    }
+    .progress{
+      height:6px; flex:1;
+      background: rgba(255,255,255,.14);
+      border-radius:999px;
+      overflow:hidden;
+      box-shadow: 0 6px 18px rgba(0,0,0,.25) inset;
+    }
+    .progress > i{
+      display:block; height:100%;
+      width:0%;
+      background: linear-gradient(90deg, var(--mint), var(--gold), var(--pink));
+      border-radius:999px;
+      transition: width .25s ease;
+    }
+    .chip{
+      pointer-events:auto;
+      display:flex; align-items:center; gap:8px;
+      padding:10px 12px;
+      border-radius:999px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.14);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 12px 40px rgba(0,0,0,.25);
+      font-size:14px;
+      user-select:none;
+    }
+    .chip button{
+      all:unset; cursor:pointer;
+      display:inline-flex; align-items:center; gap:8px;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, #fff 0%, rgba(255,255,255,.2) 55%, rgba(255,255,255,.08) 100%);
+      box-shadow: 0 0 18px rgba(127,255,212,.20);
+    }
+
+    /* Horizontal deck */
+    .deck{
+      height:100%;
+      display:flex;
+      overflow-x:auto;
+      scroll-snap-type: x mandatory;
+      scroll-behavior:smooth;
+      -webkit-overflow-scrolling: touch;
+    }
+    .deck::-webkit-scrollbar{ display:none; }
+
+    .slide{
+      position: relative;
+      overflow: hidden;
+      min-width:100vw; height:100%;
+      scroll-snap-align: start;
+      padding: calc(env(safe-area-inset-top) + 76px) 18px calc(env(safe-area-inset-bottom) + 92px);
+      display:flex; align-items:flex-end;
+    }
+
+    /* Background layers */
+    .bg, .bgimg, .bgvideo, .vignette{
+      position:absolute;
+      inset:0;
+    }
+
+    .bg{
+      z-index:0;
+      background:
+        radial-gradient(900px 700px at 20% 15%, rgba(127,255,212,.20), transparent 55%),
+        radial-gradient(900px 700px at 80% 25%, rgba(255,213,106,.18), transparent 50%),
+        radial-gradient(900px 700px at 60% 85%, rgba(255,122,168,.14), transparent 55%),
+        linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.65));
+      filter: saturate(1.08);
+      transform: translateZ(0);
+    }
+    .bg::after{
+      content:"";
+      position:absolute; inset:-20%;
+      background: radial-gradient(circle at 40% 30%, rgba(255,255,255,.10), transparent 45%);
+      animation: drift 14s ease-in-out infinite alternate;
+      opacity:.55;
+    }
+    @keyframes drift{
+      from{ transform: translate3d(-2%, -1%, 0) scale(1.02); }
+      to{ transform: translate3d(2%, 1%, 0) scale(1.04); }
+    }
+
+    .bgimg{
+      z-index:0;
+      background-size:cover;
+      background-position:center;
+      opacity:.40;
+      filter: contrast(1.02) saturate(1.06);
+      transform: translateZ(0);
+    }
+
+    .bgvideo{
+      z-index:0;
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      opacity:.42;
+      filter: contrast(1.02) saturate(1.06);
+      transform: translateZ(0);
+      pointer-events:none;
+    }
+
+    .vignette{
+      z-index:1;
+      background: radial-gradient(1200px 800px at 40% 15%, rgba(0,0,0,.10), rgba(0,0,0,.75));
+    }
+
+    /* Content card */
+    .card{
+      position:relative;
+      z-index:2;
+      width:min(720px, 100%);
+      border-radius: var(--r);
+      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.07));
+      border: 1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 16px;
+      transform: translateY(10px);
+      opacity:0;
+      animation: in .75s ease forwards;
+    }
+    .slide[data-active="true"] .card{ animation-delay: .04s; }
+    @keyframes in{
+      from{ transform: translateY(22px); opacity:0; }
+      to{ transform: translateY(0); opacity:1; }
+    }
+
+    h1{ margin:0 0 8px; font-size: clamp(26px, 5.3vw, 40px); line-height:1.05; letter-spacing:-0.02em; }
+    h2{ margin:0 0 8px; font-size: clamp(22px, 4.6vw, 32px); line-height:1.1; letter-spacing:-0.02em; }
+    p{ margin:0 0 10px; color: var(--muted); font-size: clamp(16px, 3.8vw, 18px); line-height:1.35; }
+    .kicker{
+      display:inline-flex; align-items:center; gap:10px;
+      padding:8px 12px; border-radius:999px;
+      background: rgba(0,0,0,.20);
+      border:1px solid rgba(255,255,255,.14);
+      font-size:14px; color: rgba(243,251,251,.90);
+      margin-bottom: 10px;
+    }
+    .kicker b{ color: #fff; font-weight:700; }
+    .grid{
+      display:grid; gap:10px;
+      grid-template-columns: 1fr;
+      margin-top:10px;
+    }
+    .item{
+      border-radius: 16px;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.12);
+      padding: 12px 12px;
+      display:flex; gap:12px; align-items:flex-start;
+    }
+    .ico{
+      width:34px; height:34px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(127,255,212,.28), rgba(255,213,106,.22), rgba(255,122,168,.18));
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow: 0 10px 30px rgba(0,0,0,.22);
+      flex:0 0 auto;
+      display:grid; place-items:center;
+      font-size:18px;
+    }
+    .item b{ display:block; margin:0 0 2px; font-size:16px; }
+    .item span{ display:block; color: var(--muted); font-size:15px; line-height:1.25; }
+
+    /* Optional: side layout (desktop) */
+    .slide.layout-side{ align-items: stretch; justify-content: flex-end; }
+    .slide.layout-side .card{
+      align-self: stretch;
+      width: min(520px, 44vw);
+      margin-left: auto;
+    }
+    @media (max-width: 720px){
+      .slide.layout-side{ align-items: flex-end; }
+      .slide.layout-side .card{ width: 100%; }
+    }
+
+    /* Bottom controls */
+    .controls{
+      position:fixed; left:0; right:0; bottom:0;
+      padding: 10px 14px calc(env(safe-area-inset-bottom) + 14px);
+      display:flex; justify-content:center; gap:10px; z-index:60;
+      background: linear-gradient(to top, rgba(0,0,0,.40), rgba(0,0,0,0));
+    }
+    .btn{
+      all:unset; cursor:pointer;
+      padding: 12px 14px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.26);
+      border:1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 12px 40px rgba(0,0,0,.25);
+      display:inline-flex; align-items:center; gap:10px;
+      user-select:none;
+      font-size:15px;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .dots{
+      display:flex; gap:8px; align-items:center;
+      padding: 12px 12px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.12);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .dots button{
+      all:unset; cursor:pointer;
+      width:10px; height:10px; border-radius:50%;
+      background: rgba(255,255,255,.22);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset;
+    }
+    .dots button[aria-current="true"]{
+      background: linear-gradient(90deg, var(--mint), var(--gold), var(--pink));
+      box-shadow: 0 0 18px rgba(127,255,212,.22);
+      transform: scale(1.2);
+    }
+
+    /* Surprise hearts */
+    .hearts{
+      position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:2;
+    }
+    .heart{
+      position:absolute; bottom:-40px;
+      font-size: 22px;
+      opacity: .0;
+      animation: floatUp 2.8s ease-in forwards;
+      filter: drop-shadow(0 10px 16px rgba(0,0,0,.35));
+    }
+    @keyframes floatUp{
+      0%{ transform: translate3d(0,0,0) scale(.9); opacity:0; }
+      12%{ opacity:1; }
+      100%{ transform: translate3d(0,-120vh,0) scale(1.25); opacity:0; }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce){
+      .bg::after{ animation:none; }
+      .card{ animation:none; opacity:1; transform:none; }
+      .heart{ animation:none; display:none; }
+      .deck{ scroll-behavior:auto; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Top bar: progress + music -->
+  <div class="topbar">
+    <div class="progress" aria-label="Прогресс"><i id="progressBar"></i></div>
+    <div class="chip" id="audioChip" title="Музыка моря">
+      <button id="toggleAudio" aria-label="Включить/выключить музыку">
+        <span class="dot" id="audioDot"></span>
+        <span id="audioLabel">Музыка: выкл</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Audio (iOS требует пользовательский жест для старта) -->
+  <audio id="ocean" preload="auto" loop>
+    <source src="assets/ocean.mp3" type="audio/mpeg">
+    <source src="assets/ocean.m4a" type="audio/mp4">
+  </audio>
+
+  <!-- Slides -->
+  <main class="deck" id="deck" aria-label="Презентация">
+
+    <!-- 1 (HERO VIDEO + side layout) -->
+    <section class="slide layout-side" data-bg="">
+      <div class="bg"></div>
+
+      <video class="bgvideo" autoplay muted loop playsinline preload="metadata"
+             poster="assets/hero-poster.jpg">
+        <source src="assets/hero.mp4" type="video/mp4">
+      </video>
+
+      <div class="vignette"></div>
+
+      <div class="card">
+        <div class="kicker">🌴 <b>Open-video</b> • Вьетнам • июль 2026</div>
+        <h1>Здравствуй, Анастасия,<br>ягодка моя 💛</h1>
+        <p>Я собрал для нас план поездки во Вьетнам — море, солнце, красивые места и чуть-чуть приключений.</p>
+        <div class="grid">
+          <div class="item"><div class="ico">✨</div><div><b>Формат</b><span>Свайпай как сторис — всё удобно на iPhone.</span></div></div>
+          <div class="item"><div class="ico">🎧</div><div><b>Музыка моря</b><span>Нажми сверху “Музыка”, чтобы включить.</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section class="slide" data-bg="assets/flight.png">
+  <div class="bg"></div>
+  <div class="bgimg"></div>
+  <div class="vignette"></div>
+
+  <div class="card">
+    <div class="kicker">✈️ Перелёты</div>
+    <h2>Москва → Хошимин</h2>
+    <p><b>8 июля</b> — вылет. <b>9 июля</b> — прилёт в Хошимин.</p>
+
+    <div class="grid">
+      <div class="item">
+        <div class="ico">🛬</div>
+        <div>
+          <b>Прилёт</b>
+          <span>9 июля — встречаем Вьетнам и едем к морю.</span>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="ico">🛫</div>
+        <div>
+          <b>Обратно</b>
+          <span>18 июля — вылет в Москву.</span>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="ico">💳</div>
+        <div>
+          <b>Стоимость билетов</b>
+          <span>Примерно <b>от 47 900 ₽</b> туда и <b>от 49 600 ₽</b> обратно</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px;">
+      <a href="https://www.aeroflot.ru/ru-ru/sb/search/?adults=1&infants=0&children=0&childrenfrgn=0&childrenaward=0&cabin=economy&routes=MOW.20260708.SGN-SGN.20260718.MOW"
+         target="_blank"
+         class="btn"
+         style="text-decoration:none;">
+        🔗 Посмотреть билеты на сайте Аэрофлота
+      </a>
+    </div>
+
+  </div>
+</section>
+
+    <!-- 3 -->
+<section class="slide" data-bg="assets/calendar.png">
+  <div class="bg"></div>
+  <div class="bgimg"></div>
+  <div class="vignette"></div>
+
+  <div class="card">
+    <div class="kicker">🗓️ Календарь</div>
+    <h2>План по дням</h2>
+    <div class="grid">
+      <div class="item"><div class="ico">📍</div><div><b>8 июля</b><span>Вылет из Москвы.</span></div></div>
+      <div class="item"><div class="ico">🚗</div><div><b>9 июля</b><span>Прилёт в Хошимин → трансфер в Фантхьет.</span></div></div>
+      <div class="item"><div class="ico">🌊</div><div><b>9–18 июля</b><span>Отдых у моря + экскурсии по настроению.</span></div></div>
+      <div class="item"><div class="ico">🏠</div><div><b>18 июля</b><span>Трансфер в Хошимин → вылет домой.</span></div></div>
+    </div>
+  </div>
+</section>
+
+    <!-- 4 -->
+<section class="slide" data-bg="assets/transfer.png">
+  <div class="bg"></div>
+  <div class="bgimg"></div>
+  <div class="vignette"></div>
+
+  <div class="card">
+    <div class="kicker">🚗 Трансфер</div>
+    <h2>Хошимин → Фантхьет</h2>
+    <p>После прилёта — плавно переезжаем к морю. Обычно это около <b>3–4 часов</b> в пути.</p>
+    <div class="grid">
+      <div class="item"><div class="ico">🧳</div><div><b>Комфорт</b><span>Выбираем удобный вариант, чтобы ты не устала после перелёта.</span></div></div>
+      <div class="item"><div class="ico">☀️</div><div><b>Финал</b><span>И вот мы уже в тропиках — пальмы, воздух, море.</span></div></div>
+    </div>
+  </div>
+</section>
+
+    <section class="slide" data-bg="assets/room.jpg">
+  <div class="bg"></div>
+  <div class="bgimg"></div>
+  <div class="vignette"></div>
+
+  <div class="card">
+    <div class="kicker">🏨 Отель</div>
+    <h2>Mövenpick Resort Phan Thiết 5★</h2>
+    <p><b>9–18 июля</b> • Провинция Биньтхуан, город Фантхьет.</p>
+
+    <div class="grid">
+      <div class="item">
+        <div class="ico">🛏️</div>
+        <div>
+          <b>Номер</b>
+          <span>Уют + красота + тропическое настроение.</span>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="ico">🛁</div>
+        <div>
+          <b>Детали</b>
+          <span>Ванна/душ, кондиционер, комфорт — всё, что нужно.</span>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="ico">💳</div>
+        <div>
+          <b>Стоимость проживания</b>
+          <span><b>60 544 ₽</b> за всё время проживания</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:14px;">
+      <a href="https://hotel.tutu.ru/h_mvenpick_resort_phan_thiet/?check_in=2026-07-07&check_out=2026-07-18&details_params=a%3D1&geo_id=8016142&geo_name=Вьетнам&geo_type=country&room[0]=2.&search_id=97659ca2-2c1d-4718-9b7e-6fb879afde06&sorting=relevanceDesc#njbczjmcgwk"
+         target="_blank"
+         class="btn"
+         style="text-decoration:none;">
+        🔗 Посмотреть отель
+      </a>
+    </div>
+
+  </div>
+</section>
+
+    <!-- 6 -->
+    <section class="slide" data-bg="assets/bath.jpg">
+      <div class="bg"></div><div class="bgimg"></div><div class="vignette"></div>
+      <div class="card">
+        <div class="kicker">🌴 Почему Фантхьет</div>
+        <h2>Тёплый юг и море</h2>
+        <p>Фантхьет — курорт на побережье Южно-Китайского моря: часто сухо, тепло и очень красиво.</p>
+        <div class="grid">
+          <div class="item"><div class="ico">🌡️</div><div><b>Погода</b><span>Обычно +27…+30°C, море тёплое.</span></div></div>
+          <div class="item"><div class="ico">🏄</div><div><b>Муйне</b><span>Рай для кайтинга и сёрфинга (и просто прогулок).</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NEW — Экскурсия по Хошимину -->
+<section class="slide" data-bg="assets/hochiminh.jpg">
+  <div class="bg"></div>
+  <div class="bgimg"></div>
+  <div class="vignette"></div>
+
+  <div class="card">
+    <div class="kicker">🏙 Экскурсия</div>
+    <h2>Обзорная экскурсия по Хошимину</h2>
+    <p>Современный мегаполис с колониальной архитектурой, храмами и атмосферными улочками.</p>
+
+    <div class="grid">
+      <div class="item"><div class="ico">⛪</div><div><b>Нотр-Дам</b><span>Французский собор в центре города.</span></div></div>
+      <div class="item"><div class="ico">🏛</div><div><b>Дворец Воссоединения</b><span>Историческое сердце страны.</span></div></div>
+      <div class="item"><div class="ico">🛍</div><div><b>Рынки</b><span>Бен Тхань и местная уличная жизнь.</span></div></div>
+      <div class="item"><div class="ico">🍜</div><div><b>Стритфуд</b><span>Настоящая вьетнамская кухня.</span></div></div>
+    </div>
+  </div>
+</section>
+    <!-- NEW — Экскурсия Vinpearl -->
+<section class="slide" data-bg="assets/vinpearl.jpg">
+  <div class="bg"></div>
+  <div class="bgimg"></div>
+  <div class="vignette"></div>
+
+  <div class="card">
+    <div class="kicker">🎡 Экскурсия</div>
+    <h2>Парк развлечений Vinpearl (VinWonders)</h2>
+    <p>Один из крупнейших парков развлечений во Вьетнаме: аттракционы, аквапарк, шоу и море эмоций.</p>
+
+    <div class="grid">
+      <div class="item"><div class="ico">🎢</div><div><b>Аттракционы</b><span>Горки, колесо обозрения и захватывающие виды.</span></div></div>
+      <div class="item"><div class="ico">🌊</div><div><b>Аквапарк</b><span>Водные горки и отдых у бассейнов.</span></div></div>
+      <div class="item"><div class="ico">🎆</div><div><b>Шоу</b><span>Вечерние представления и яркая атмосфера.</span></div></div>
+    </div>
+  </div>
+</section>
+    <!-- 7 -->
+    <section class="slide" data-bg="assets/dunes.jpg">
+      <div class="bg"></div><div class="bgimg"></div><div class="vignette"></div>
+      <div class="card">
+        <div class="kicker">🏜 Экскурсия №1</div>
+        <h2>Белые и Красные дюны Mui Ne</h2>
+        <p>Мини-пустыня у моря: можно встретить рассвет или поймать закат. При желании — ATV/квадроциклы.</p>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section class="slide" data-bg="assets/tacu.png">
+      <div class="bg"></div><div class="bgimg"></div><div class="vignette"></div>
+      <div class="card">
+        <div class="kicker">⛰ Экскурсия №2</div>
+        <h2>Ta Cu Mountain + лежащий Будда</h2>
+        <p>Канатная дорога, огромная статуя Будды и панорамы — очень “вау” место.</p>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section class="slide" data-bg="assets/fairy.jpeg">
+      <div class="bg"></div><div class="bgimg"></div><div class="vignette"></div>
+      <div class="card">
+        <div class="kicker">🌊 Экскурсия №3</div>
+        <h2>Fairy Stream (Сказочный ручей)</h2>
+        <p>Лёгкая прогулка по мелководью среди красных и белых скал — фотогенично и без напряга.</p>
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section class="slide" data-bg="assets/cham.jpg">
+      <div class="bg"></div><div class="bgimg"></div><div class="vignette"></div>
+      <div class="card">
+        <div class="kicker">🏛 Экскурсия №4</div>
+        <h2>Культурный день: башни + рынки</h2>
+        <p>Po Shanu Cham Towers, рыбацкая деревня, местные рынки и вкусная традиционная кухня.</p>
+      </div>
+    </section>
+
+    <!-- 11 -->
+    <section class="slide" data-bg="assets/bay.png">
+      <div class="bg"></div><div class="bgimg"></div><div class="vignette"></div>
+      <div class="card">
+        <div class="kicker">🚤 Экскурсия №5</div>
+        <h2>Море: острова / снорклинг / рыбалка</h2>
+        <p>День на воде: бухты, купание, снорклинг, пикник на берегу. Максимум свободы и красоты.</p>
+      </div>
+    </section>
+
+    <!-- 12 -->
+    <section class="slide" data-bg="assets/massage.jpg">
+      <div class="bg"></div><div class="bgimg"></div><div class="vignette"></div>
+      <div class="card">
+        <div class="kicker">💆‍♀️ Релакс</div>
+        <h2>Вьетнамские массажи</h2>
+        <p>После экскурсий — расслабляемся: масла, спа, тишина и море рядом.</p>
+      </div>
+    </section>
+
+    <!-- 13 -->
+    <section class="slide" data-bg="assets/food.jpeg">
+      <div class="bg"></div><div class="bgimg"></div><div class="vignette"></div>
+      <div class="card">
+        <div class="kicker">🍜 Вкус</div>
+        <h2>Местная еда</h2>
+        <p>Фо, морепродукты, спринг-роллы, фрукты и кокосы — будем пробовать всё, что хочется.</p>
+      </div>
+    </section>
+
+    <!-- 15 (Surprise) -->
+<section class="slide" data-bg="assets/sunset.jpg">
+  <div class="bg"></div>
+  <div class="bgimg"></div>
+  <div class="vignette"></div>
+  <div class="hearts" id="hearts"></div>
+
+  <div class="card">
+    <div class="kicker">💛 Финал</div>
+    <h1>Ты готова к приключению?</h1>
+
+    <div class="grid">
+      <div class="item"><div class="ico">🌺</div><div><b>Обещаю</b><span>Тепло, заботу, вкусную еду и много красивых моментов.</span></div></div>
+      <div class="item"><div class="ico">📸</div><div><b>И фото!</b><span>Сделаем снимки, которые захочется пересматривать.</span></div></div>
+    </div>
+
+    <div style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;">
+      <button class="btn" id="surpriseBtn" type="button">💛 Нажми сюда</button>
+      <button class="btn" id="restartBtn" type="button">🔁 С начала</button>
+    </div>
+  </div>
+</section>
+
+  </main>
+
+  <!-- Bottom controls -->
+  <div class="controls">
+    <button class="btn" id="prevBtn" type="button">⬅️ Назад</button>
+    <div class="dots" id="dots" aria-label="Слайды"></div>
+    <button class="btn" id="nextBtn" type="button">Вперёд ➡️</button>
+  </div>
+
+  <script>
+    const deck = document.getElementById('deck');
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const progressBar = document.getElementById('progressBar');
+    const dots = document.getElementById('dots');
+
+    // Background images (only where bgimg exists)
+    slides.forEach((s) => {
+      const url = s.getAttribute('data-bg') || '';
+      const bgimg = s.querySelector('.bgimg');
+      if (url && bgimg) bgimg.style.backgroundImage = `url("${url}")`;
+    });
+
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+    function getIndex(){
+      const x = deck.scrollLeft;
+      const w = deck.clientWidth || 1;
+      return clamp(Math.round(x / w), 0, slides.length - 1);
+    }
+
+    function scrollToIndex(i){
+      const w = deck.clientWidth || 1;
+      deck.scrollTo({ left: i * w, behavior: 'smooth' });
+    }
+
+    // Dots
+    slides.forEach((_, i) => {
+      const b = document.createElement('button');
+      b.setAttribute('aria-label', `Слайд ${i+1}`);
+      b.addEventListener('click', () => scrollToIndex(i));
+      dots.appendChild(b);
+    });
+
+    function setActive(i){
+      slides.forEach((s, k) => s.dataset.active = (k === i) ? "true" : "false");
+      const pct = ((i) / (slides.length - 1)) * 100;
+      progressBar.style.width = `${isFinite(pct) ? pct : 0}%`;
+      Array.from(dots.children).forEach((d, k) => d.setAttribute('aria-current', k === i ? 'true' : 'false'));
+    }
+
+    // Buttons
+    document.getElementById('prevBtn').addEventListener('click', () => scrollToIndex(getIndex() - 1));
+    document.getElementById('nextBtn').addEventListener('click', () => scrollToIndex(getIndex() + 1));
+    document.getElementById('restartBtn')?.addEventListener('click', () => scrollToIndex(0));
+
+    // Keyboard (desktop)
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') scrollToIndex(getIndex() + 1);
+      if (e.key === 'ArrowLeft') scrollToIndex(getIndex() - 1);
+    });
+
+    // Scroll sync
+    let raf = null;
+    deck.addEventListener('scroll', () => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => setActive(getIndex()));
+    });
+    window.addEventListener('resize', () => setActive(getIndex()));
+
+    // Init
+    setActive(0);
+
+    // Audio toggle (iOS: must be user gesture)
+    const ocean = document.getElementById('ocean');
+    const toggleAudio = document.getElementById('toggleAudio');
+    const audioLabel = document.getElementById('audioLabel');
+    const audioDot = document.getElementById('audioDot');
+
+    let audioOn = false;
+
+    async function setAudio(on){
+      audioOn = on;
+      if (audioOn){
+        try{
+          await ocean.play();
+          audioLabel.textContent = 'Музыка: вкл';
+          audioDot.style.boxShadow = '0 0 18px rgba(127,255,212,.35)';
+        }catch(err){
+          audioOn = false;
+          audioLabel.textContent = 'Музыка: выкл';
+        }
+      }else{
+        ocean.pause();
+        audioLabel.textContent = 'Музыка: выкл';
+        audioDot.style.boxShadow = '0 0 18px rgba(127,255,212,.20)';
+      }
+    }
+
+    toggleAudio.addEventListener('click', () => setAudio(!audioOn));
+
+    // Surprise hearts
+    const hearts = document.getElementById('hearts');
+    const surpriseBtn = document.getElementById('surpriseBtn');
+
+    function popHearts(){
+      if (!hearts) return;
+      const count = 18;
+      for (let i=0;i<count;i++){
+        const h = document.createElement('div');
+        h.className = 'heart';
+        h.textContent = (i % 3 === 0) ? '💛' : (i % 3 === 1) ? '🌺' : '✨';
+        const left = Math.random() * 100;
+        const delay = Math.random() * 0.45;
+        const size = 18 + Math.random() * 18;
+        h.style.left = left + 'vw';
+        h.style.animationDelay = delay + 's';
+        h.style.fontSize = size + 'px';
+        hearts.appendChild(h);
+        setTimeout(() => h.remove(), 3200);
+      }
+    }
+    surpriseBtn?.addEventListener('click', popHearts);
+  </script>
+
+</body>
+</html>
